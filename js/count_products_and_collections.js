@@ -1,5 +1,5 @@
 var total_products = 0,
-	total_collections = 0;;
+	total_collections = 0;
 
 function grab_products(index){
 
