@@ -1,0 +1,82 @@
+{% layout none %}
+{% assign additional_namspaces = '' %}
+{% assign metafield_namespaces = 'global,bold,subscriptions,c_f,custom_sections,' | append: additional_namspaces | split: ',' %}
+{% assign default_image = 'https://cdn.shopify.com/s/assets/no-image-2048-5e88c1b20e087fb7bbe9a3771824e743c244f437e4f8ba93bbf7b11b53f7824c_large.gif' %}
+{% if settings.store_default_image_toggle %}
+    {% capture default_image %}{{ 'store_default_image.jpg' | asset_url }}{% endcapture %}
+{% endif %}
+
+{
+	"product": {
+		"available": {{ product.available }},
+		"collections": [{% if product.collections.size > 0 %}
+			{% for collection in product.collections %}
+				"{{ collection.handle }}"{% unless forloop.last %},{% endunless %}
+			{% endfor %}
+		{% endif %}],
+		"handle": "{{ product.handle }}",
+		"id": {{ product.id }},
+		"description": "{{ product.description | strip_newlines | replace: '"', '\"' }}",
+		"truncated_description": "{{ product.description | strip_newlines | strip_html | replace: '"', '\"' | truncatewords: 50  }}",
+		"images": [{% for image in product.images %}
+			{
+				"id": {{ image.id }},
+				"position": {{ image.position }},
+				"product_id": {{ image.product_id }},
+				"url": "{{ image.src | img_url: 'large' }}"
+			}{% unless forloop.last %},{% endunless %}
+		{% endfor %}],
+		"default_image": "{{ default_image }}",
+		"metafields": {
+		{% for namespace in metafield_namespaces %}
+			"{{ namespace }}": {
+				{% for field in product.metafields[namespace] %}
+					{% if field != blank %}"{{ field | first }}": "{{ field | last }}"{% endif %}{% unless forloop.last %},{% endunless %}
+				{% endfor %}
+			}{% unless forloop.last %},{% endunless %}
+		{% endfor %}
+		},
+		"options": [{% for option in product.options %}
+			{
+				"name": "{{ option }}",
+				"product_id": {{ product.id }}
+			}{% unless forloop.last %},{% endunless %}
+		{% endfor %}],
+		"product_type": "{{ product.type }}",
+		"price": {{ product.price }},
+		"tags": [{% if product.tags.size > 0 %}
+			{% for tag in product.tags %}
+				"{{ tag }}"{% unless forloop.last %},{% endunless %}
+			{% endfor %}
+		{% endif %}],
+		"title": "{{ product.title }}",
+		"url": "{{ product.url }}",
+		"vendor": "{{ product.vendor }}",
+		"variants": [{% for variant in product.variants %}
+			{
+				"image": {% if variant.image %}"{{ image.src | img_url: 'large' }}"{% else %}null{% endif %},
+				"default_image": "{{ default_image }}",
+				"available": {{ variant.available }},         
+				"id": {{ variant.id }},
+				"inventory_quantity": {{ variant.inventory_quantity }},
+				"option1": "{{ variant.option1 }}",
+				"option2": "{{ variant.option2 }}",
+				"option3": "{{ variant.option3 }}",
+				"position": {{ forloop.index }},
+				"price": {{ variant.price }},
+				"price_compare": {% if variant.compare_at_price.size > 0 %}{{ variant.compare_at_price }}{% else %}{{ variant.price }}{% endif %},
+				"sku": "{{ variant.sku }}",
+				"title": "{{ variant.title }}",
+				"metafields": {
+					{% for namespace in metafield_namespaces %}
+					"{{ namespace }}": {
+						{% for field in variant.metafields[namespace] %}
+								{% if field != blank %}"{{ field | first }}": "{{ field | last }}"{% endif %}{% unless forloop.last %},{% endunless %}
+						{% endfor %}
+					}{% unless forloop.last %},{% endunless %}
+					{% endfor %}
+				}
+			}{% unless forloop.last %},{% endunless %}{% endfor %}
+		]
+	}
+}

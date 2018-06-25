@@ -1,0 +1,181 @@
+{% layout none %}
+{%- assign additional_namespaces = '' -%}
+{%- assign metafield_namespaces = 'global,bold,subscriptions,c_f,custom_sections,' | append: additional_namespaces | split: ',' -%}
+{%- assign default_image = 'https://cdn.shopify.com/s/assets/no-image-2048-5e88c1b20e087fb7bbe9a3771824e743c244f437e4f8ba93bbf7b11b53f7824c_large.gif' -%}
+{%- if settings.store_default_image_toggle -%}
+    {% capture default_image %}{{ 'store_default_image.jpg' | asset_url }}{% endcapture %}
+{%- endif -%}
+
+
+{%- assign item_handles = '' -%}
+{%- for item in cart.items -%}
+    {%- assign item_handles = item_handles | append: item.product.handle -%}
+    {%- unless forloop.last -%}
+        {%- assign item_handles = item_handles | append: ',' -%}
+    {%- endunless -%}
+{%- endfor -%}
+
+{%- assign current_cart_items = item_handles | split: ',' -%}
+
+{%- assign show_upsells = true -%}
+
+{%- assign is_subscription = false -%}
+
+
+{
+    "cart": {
+        "id": {{ cart.id | default: "null" }},
+        "items": [{% for item in cart.items %}{
+            {%- assign is_subscription = false -%}
+            {%- assign compare_at_price = item.product.variants.first.compare_at_price | times: 1 -%}
+            {%- unless compare_at_price > 0 -%}
+                {%- assign compare_at_price = item.price -%}
+            {%- endunless -%}
+            "id": {{ item.id }},
+            "price": {
+                "unit": {{ item.price }},
+                "line": {{ item.line_price }},
+                "compareAt": {{ compare_at_price }},
+            {%- unless item.original_price == blank -%}
+                "scriptsOriginalPrice": {{ item.original_price }},    
+            {%- endunless -%}
+            {%- unless item.original_line_price == blank -%}
+                "scriptsOriginalLinePrice": {{ item.original_line_price }}    
+            {%- endunless -%}
+            },
+            {%- unless item.discounts == blank -%}
+            {%- endunless -%}
+        {% if item.discounts.size > 0 %}
+            "discounts": {
+            },
+            "totalDiscount": {{ item.total_discount }},
+        {% endif %}
+            "isGiftCard": {{ item.gift_card }},
+            "url": "{{ item.url }}",
+            "quantity": {{ item.quantity }},
+            "key": "{{ item.key }}",
+            "properties": { {% for property in item.properties %}
+                "{{ property.first }}": "{{ property.last }}"{% unless forloop.last %},{% endunless %}
+                {%- if property.first contains 'subscription' -%}
+                    {%- assign is_subscription = true -%}
+                {%- endif -%}
+            {% endfor %} },
+            "variant_title": {% if item.variant.title contains "Default" %}null{% else %}"{{ item.variant.title }}"{% endif %},
+            "is_subscription": {{ is_subscription }},
+            "product": { {% assign product = item.product %}
+                "available": {{ product.available }},
+                "collections": [{% if product.collections.size > 0 %}
+                    {%- for collection in product.collections -%}
+                        "{{ collection.handle }}"{%- unless forloop.last -%},{%- endunless -%}
+                    {%- endfor -%}
+                {% endif %}],
+                "handle": "{{ product.handle }}",
+                "id": {{ product.id }},
+                "images": [{% for image in product.images %}
+                    {
+                        "id": {{ image.id }},
+                        "position": {{ image.position }},
+                        "product_id": {{ image.product_id }},
+                        "url": "{{ image.src | img_url: '200x200' }}"
+                    }{% unless forloop.last %},{% endunless %}
+                {% endfor %}],
+                "default_image": "{{ default_image }}",
+                "metafields": {
+                {%- for namespace in metafield_namespaces -%}
+                    "{{ namespace }}": {
+                        {%- for field in product.metafields[namespace] -%}
+                            {%- if field != blank -%}"{{ field | first }}": "{{ field | last | newlines_to_br }}"{%- endif -%}{%- unless forloop.last -%},{%- endunless -%}
+                        {%- endfor -%}
+                    }{% unless forloop.last %},{% endunless %}
+                {%- endfor -%}
+                },
+                "options": [
+                {%- for option in product.options_with_values -%}
+                    {
+                        "name": "{{ option.name }}",
+                        "position": "{{ option.position }}",
+                        "values": {{ option.values | json }}
+                    }{% unless forloop.last  %},{% endunless %}
+                {%- endfor -%}
+                ],
+                "product_type": "{{ product.type }}",
+                "price": {{ product.price }},
+                "tags": {% if product.tags.size > 0 %}{{ product.tags | json }},{% else %}[],{% endif %}
+                "title": "{{ product.title }}",
+                "url": "{{ product.url }}",
+                "vendor": "{{ product.vendor }}",
+                "variants": [{% for variant in product.variants %}
+                    {    
+                        "image": {% if variant.image %}"{{ image.src | img_url: 'large' }}"{% else %}null{% endif %},
+                        "default_image": "{{ default_image }}",
+                        "available": {{ variant.available }},         
+                        "id": {{ variant.id }},
+                        "inventory_quantity": {{ variant.inventory_quantity }},
+                        "option1": "{{ variant.option1 }}",
+                        "option2": "{{ variant.option2 }}",
+                        "option3": "{{ variant.option3 }}",
+                        "position": {{ forloop.index }},
+                        "price": {{ variant.price }},
+                        "price_compare": {% if variant.compare_at_price.size > 0 %}{{ variant.compare_at_price }}{% else %}null{% endif %},
+                        "sku": "{{ variant.sku }}",
+                        "title": "{{ variant.title }}",
+                        "metafields": {
+                            {% for namespace in metafield_namespaces %}
+                            "{{ namespace }}": {
+                                {% for field in variant.metafields[namespace] %}
+                                        {% if field != blank %}"{{ field | first }}": "{{ field | last | strip_newlines | strip_html }}"{% endif %}{% unless forloop.last %},{% endunless %}
+                                {% endfor %}
+                            }{% unless forloop.last %},{% endunless %}
+                            {% endfor %}
+                        }
+                    }{% unless forloop.last %},{% endunless %}{% endfor %}
+                ]
+            },
+            {%- assign upsell_product = all_products[product.metafields.product_upsell.Upsell_Handle] -%}
+            {%- if is_subscription -%}
+                {%- assign product = all_products[product.metafields.subscriptions.original_handle] -%}
+                {%- assign upsell_product = all_products[product.metafields.product_upsell.Upsell_Handle] -%}
+            {%- endif -%}
+            "upsell": {%- if product.metafields.product_upsell.Upsell_Toggle == "true" or product.metafields.product_upsell.Upsell_Toggle == "True" -%}
+
+                {%- assign upsell_not_in_cart = true -%}
+                {%- if current_cart_items contains product.metafields.product_upsell.Upsell_Handle -%}
+                    {%- assign upsell_not_in_cart = false -%}
+                {%- endif -%}
+
+                {%- if upsell_product.available and upsell_not_in_cart and show_upsells -%}
+                
+                    {%- assign variant_index = product.metafields.product_upsell.Upsell_Variant | default: 1 -%}
+                    {%- assign variant_index =  variant_index | times: 1 | minus: 1 -%}
+                    {%- if variant_index >= product.variants.size -%}
+                        {%- assign variant_index = product.variants.size | minus: 1 -%}
+                    {%- endif -%}
+                    {
+                        "handle": "{{ product.metafields.product_upsell.Upsell_Handle }}",
+                        "variant_index": {{ variant_index }},
+                        "heading": "{{ product.metafields.product_upsell.Upsell_Heading }}",
+                        "text": "{{ product.metafields.product_upsell.Upsell_Text }}",
+                        "image": "{{ upsell_product.images.first | img_url: '200x200' }}",
+                        "product": {
+                            "id": {{ upsell_product.id }},
+                            "title": "{{ upsell_product.title }}",
+                            "variant_id": {{ upsell_product.variants[variant_index].id }},
+
+                            "variant_title": {% if upsell_product.variants[variant_index].title contains "Default" %}null{% else %}"{{ upsell_product.variants[variant_index].title }}"{% endif %},
+                            "price": {{ upsell_product.variants[variant_index].price }}
+                        }
+                    }
+                    {%- assign show_upsells = false -%}
+                {%- else -%}
+                    false
+                {%- endif -%}
+            {%- else -%}
+                false
+            {%- endif -%}
+        }{% unless forloop.last %},{% endunless %}{% endfor %}],
+        "products_count": {{ cart.item_count }},
+        "line_items_count": {{ cart.items.size }},
+        "total_price": {{ cart.total_price }},
+        "original_total_price": {{ cart.original_total_price }}
+    }
+}
