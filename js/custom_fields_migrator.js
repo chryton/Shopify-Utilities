@@ -52,7 +52,7 @@ function addMetafield(metafieldData){
 		urlPart = "";
 
 	if (fieldData.owner_resource === "product" || fieldData.owner_resource === "collection") {
-		"/" + fieldData.owner_resource + "s/" + owner_id;
+		urlPart = "/" + fieldData.owner_resource + "s/" + fieldData.owner_id;
 	}
 
 	$.ajax({
