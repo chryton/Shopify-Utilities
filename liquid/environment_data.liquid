@@ -1,0 +1,162 @@
+{% assign theme_state = false %}
+
+
+{% capture CFH %}{{ content_for_header | escape | json }}{% endcapture %}
+
+<script id="env_data">
+	var ENV = ENV || {};
+
+	ENV.tests = ENV.tests || [];
+
+	ENV.shop = {
+		url: "{{ shop.secure_url }}",
+		shopify_domain: "https://{{ shop.permanent_domain }}",
+		locale: "{{ shop.locale }}",
+		money: {
+			curency: "{{ shop.currency }}",
+			format: "{{ shop.money_format }}",
+			formatWithCurrency: "{{ shop.money_with_currency_format }}"
+		}
+	};
+
+	ENV.template = {
+	    handle: '{{ page_title | handle | escape }}',
+	    template: '{{ template | replace: '.', ' ' | truncatewords: 1, '' | handle }}',
+	    template_default: '{{ template | escape }}'
+	};
+
+	{% if page.id %}
+		ENV.page = {
+		    id: {{ page.id }},
+		    handle: '{{ page_title | handle | escape }}',
+		    template: '{{ template | replace: '.', ' ' | truncatewords: 1, '' | handle }}',
+		    template_default: '{{ template | escape }}',
+		    admin: false,
+		    edit: false
+		};
+	{% endif %}
+
+	ENV.theme = {
+	    id: {{ theme.id | strip | escape }},
+	    role: '{{ theme.role | strip | escape }}',
+	    name: '{{ theme.name | strip | escape }}',
+	    state: {{ theme_state }}
+	};
+
+	{% if product %}
+	ENV.product = {
+		id: {{ product.id }},
+		handle: "{{ product.handle }}",
+		title: "{{ product.title | escape }}",
+		admin: false,
+		edit: false
+	};
+	{% endif %}
+
+	{% if collection and product == blank %}
+		{% assign collection_id = collection.id %}
+		{% if collection.handle == "all" %}
+			{% assign collection_id = -1 %}
+		{% endif %}
+	ENV.collection = {
+		id: {{ collection_id }},
+		handle: "{{ collection.handle }}",
+		title: "{{ collection.title }}",
+		count: {{ collection.products.size }},
+		admin: false,
+		edit: false
+	};
+	{% endif %}
+
+	{% if customer %}
+	ENV.customer = {
+		id: {{ customer.id }},
+		email: "{{ customer.email }}",
+		name: {
+			full: "{{ customer.name | escape }}",
+			first: "{{ customer.first_name | escape }}",
+			last: "{{ customer.last_name | escape }}"
+		},
+		tags: {{ customer.tags | json }}
+	}; 
+	{% else %}
+	ENV.customer = false;
+	{% endif %}
+
+
+	{% if CFH contains 'preview_bar' or CFH contains 'admin_bar_iframe' %}
+	    {% assign admin = true %}
+	{% endif %}
+
+	{% if admin %}
+	    <!-- User is an admin -->
+		ENV.theme.sections = {};
+
+
+		ENV.edit = function(realm, id) {
+			return "{{ shop.secure_url }}/admin/" + realm + "/" + id;
+		};
+
+
+		ENV.shop.totalProducts = {{ shop.products_count }};
+		ENV.shop.totalCollections = {{ shop.collections_count }};
+
+		{% if page.id %}
+			ENV.page.admin = ENV.shop.url + '/admin/pages/{{ page.id }}';
+			ENV.page.edit = function() {
+				var url = ENV.edit('pages', {{ page.id }});
+				window.open(url);
+			};
+		{% endif %}
+
+		{% if product %}
+			ENV.product.admin = ENV.shop.url + '/admin/products/{{ product.id }}';
+			ENV.product.edit = function() {
+				var url = ENV.edit('products', {{ product.id }});
+				window.open(url);
+			};
+		{% endif %}
+
+
+		{% if collection and product == blank %}
+			ENV.collection.admin = ENV.shop.url + '/admin/collections/{{ collection.id }}';
+			ENV.collection.edit = function() {
+				var url = ENV.edit('collections', {{ collection.id }});
+				window.open(url);
+			};
+		{% endif %}
+
+		ENV.admin = function(){
+			window.open(ENV.shop.shopify_domain + '/admin')
+		}
+		ENV.theme.edit = function(){
+			window.open(ENV.shop.shopify_domain + '/admin/themes/' + ENV.theme.id);
+		}
+		ENV.theme.reset = function(){
+			window.location.assign(ENV.shop.url + '/?preview_theme_id=');
+		}
+		ENV.theme.load = function(id){
+			window.location.assign(ENV.shop.url + '/?preview_theme_id=' + id);
+		}
+		ENV.theme.customize = function(withRoute){
+			var url = (withRoute) ? "#" + window.location.pathname : "";
+			
+			window.open(ENV.shop.shopify_domain + '/admin/themes/' + ENV.theme.id + '/editor' + url);
+		}
+		ENV.theme.current = function(withRoute){
+			var path = (withRoute) ? window.location.pathname : "";
+		
+			console.log(ENV.shop.url + path + '/?preview_theme_id=' + ENV.theme.id);
+			return ENV.shop.url + path + '/?preview_theme_id=' + ENV.theme.id;
+		}
+		ENV.theme.sections.edit = function(){
+			window.open(ENV.shop.shopify_domain + '/admin/themes/' + ENV.theme.id + '/editor#' + window.location.pathname);
+		}
+
+		if (window.location.origin.indexOf('shopifypreview.com') > 0) {
+			window.location.replace(ENV.shop.url + window.location.pathname + window.location.search);
+		}
+	{% endif %}
+
+
+</script>
