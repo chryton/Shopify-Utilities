@@ -1,0 +1,22 @@
+{% comment %}
+RANDOMIZER
+
+@author: Andrew E. Mauney (@aem)
+@date: Dec 2015
+@purpose: Randomize items items on liquid templating side; assumes you are trying to randomize a theme setting
+@requirements: Default theme setting for randomized elements, comma-separated list of options to randomize
+@usage: 1) Set a default to `randomized` for a backup.
+		2) Set `randomizer_options` to a comma-separated array of options you wish to choose from.
+		3) ???
+		4) Profit. #FatStacks
+
+{% endcomment %}
+
+{% assign randomized = settings.DEFAULTFORRANDOMIZER %}
+{% assign randomizer = 'now' | date: '%S' | slice: 1 | plus: 0 %}
+{% assign randomizer_options = settings.WHATYOUWANTTORANDOMIZE | split: ', ' %}
+{% assign options_length = randomizer_options.size | minus: 1 %}
+{% if randomizer > options_length %}
+	{% assign randomizer = 'now' | date: '%S' | slice: 1 | plus: 0 | divided_by: 10 | round %}
+{% endif %}
+{% assign randomized = randomizer_options[randomizer] %}
