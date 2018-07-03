@@ -1,5 +1,5 @@
 {%- comment -%}
-This snippet structures the micro-data using JSON-LD specification
+This snippet structures the micro-data using JSON+LD specification
 
 TODO: 
 - Add About Page Schema https://schema.org/AboutPage
@@ -9,177 +9,221 @@ TODO:
 {%- endcomment -%}
 
 
-
 <script id="seo--schema" type="application/ld+json">
-  {
-    "@context": "http://schema.org",
-    {%- if template contains 'product' -%}
-  "@type": "Product",
-  "offers": {
-    "@type": "Offer",
-    "availability": {%- if product.available -%}"//schema.org/InStock"{%- else -%}"//schema.org/OutOfStock"{%- endif -%},
-    "price": {{ product.price_min | money_without_currency | json }},
-    {%- if variant.inventory_management == "shopify" and variant.inventory_policy != "continue" -%}
-      "inventoryLevel" : {{ product.variants.first.inventory_quantity | json }},
-    {%- endif -%}
-    "priceCurrency": {{ shop.currency | json }}
-  },
-  {%- unless product.vendor == blank -%}
-    "brand": {{ product.vendor | json }},
-  {%- endunless -%}
-  "name": {{ product.title | json }},
-  "description": {{ product.description | strip_html | newline_to_br | json }},
-  {%- unless product.type == blank -%}
-    "category": {{ product.type | json }},
-  {%- endunless -%}
-  "identifier": "{{ canonical_url }}",
-  "url": "{{ shop.url }}{{ product.url }}",
-  "itemCondition": "New",
-  "productID": {{ product.id }},
-  {%- unless product.sku == blank -%}
-    "sku": "{{ product.variants.first.sku }}",
-  {%- endunless -%}
-  {%- unless product.metafields.yotpo.reviews_average == blank -%}
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "bestRating": "5.0",
-      "worstRating": "0.0",
-      "ratingCount": {{ product.metafields.yotpo.reviews_count | json }},
-      "ratingValue": {{ product.metafields.yotpo.reviews_average | json }}
-  },
-  {%- endunless -%}
-  "image": {
-    "@type": "ImageObject",
-    "url": "https:{{ product.featured_image | img_url: '1080x1080', format: 'pjpg' }}",
-    "contentUrl": "https:{{ product.featured_image | img_url: '1080x1080', format: 'pjpg' }}",
-    "image": "https:{{ product.featured_image | img_url: '1080x1080', format: 'pjpg' }}",
-    "thumbnailUrl": "https:{{ product.featured_image | img_url: '480x480', format: 'pjpg' }}",
-    "encodingFormat": "image/jpeg",
-    "name": {{ product.featured_image.alt | default: product.title | json }},
-    "width": {
-      "@type": "QuantitativeValue",
-      "unitCode": "E37",
-      "unitText": "Pixel",
-      "value": "1080"
-    },
-    "height": {
-      "@type": "QuantitativeValue",
-      "unitCode": "E37",
-      "unitText": "Pixel",
-      "value": "1080"
-    }
-  }
-  {%- elsif template contains 'page' -%}
-    "@type": "WebPage",
-    "mainEntityOfPage": "{{ page.url }}",
-    {% if page.tags.size > 0 %}
-      "keywords": "{{ page.tags | join: ', ' }}",
-    {% endif %}
-    "headline": {{ page.title | json }},
-    "name": {{ page.title | json }},
-    "description": {{ page.excerpt_or_content | strip_html | truncatewords: 50 | json }},
-    "dateCreated": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
-    "datePublished": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
-    "dateModified": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
-    "lastReviewed": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
-    "copyrightYear": "{{ page.published_at | date: '%Y' }}",
-    "copyrightHolder": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }},
-      "url": "{{ shop.url }}"
-    },
-    {%- unless page.image == blank -%}
-      "image": {
-        "@type": "ImageObject",
-        "url": "https:{{ page.image | img_url: '1080x1080', format: 'pjpg' }}",
-        "image": "https:{{ page.image | img_url: '1080x1080', format: 'pjpg' }}",
-        "name": {{ page.image.alt | default: article.title | json }},
-        "width": {
-          "@type": "QuantitativeValue",
-          "unitCode": "E37",
-          "unitText": "Pixel",
-          "value": "1080"
-        },
-        "height": {
-          "@type": "QuantitativeValue",
-          "unitCode": "E37",
-          "unitText": "Pixel",
-          "value": "1080"
-        }
-      },
-    {%- endunless -%}
-    "author": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }},
-      "url": "{{ shop.url }}"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }},
-      "url": "{{ shop.url }}"
-    }
-{%- elsif template contains 'article' -%}
-    "@type": "BlogPosting",
-    "mainEntityOfPage": "{{ article.url }}",
-    "articleSection": {{ blog.title | json }},
-    {% if article.tags.size > 0 %}
-      "keywords": "{{ article.tags | join: ', ' }}",
-    {% endif %}
-    "headline": {{ article.title | json }},
-    "name": {{ article.title | json }},
-    "description": {{ article.excerpt_or_content | strip_html | truncatewords: 50 | json }},
-    "dateCreated": "{{ article.created_at | date: '%Y-%m-%dT%T' }}",
-    "datePublished": "{{ article.published_at | date: '%Y-%m-%dT%T' }}",
-    "dateModified": "{{ article.published_at | date: '%Y-%m-%dT%T' }}",
-    "copyrightYear": "{{ article.created_at | date: '%Y' }}",
-    "copyrightHolder": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }},
-      "url": "{{ shop.url }}"
-    },
-    {%- unless article.image == blank -%}
-      "image": {
-        "@type": "ImageObject",
-        "url": "https:{{ article.image | img_url: '1080x1080', format: 'pjpg' }}",
-        "image": "https:{{ article.image | img_url: '1080x1080', format: 'pjpg' }}",
-        "name": {{ article.image.alt | default: article.title | json }},
-        "width": {
-          "@type": "QuantitativeValue",
-          "unitCode": "E37",
-          "unitText": "Pixel",
-          "value": "1080"
-        },
-        "height": {
-          "@type": "QuantitativeValue",
-          "unitCode": "E37",
-          "unitText": "Pixel",
-          "value": "1080"
-        }
-      },
-    {%- endunless -%}
-    "author": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }},
-      "url": "{{ shop.url }}"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }},
-      "url": "{{ shop.url }}"
-    },
-    "commentCount": {{ article.comments_count }},
-    "comment": [
-      {%- for comment in article.comments limit: 5 -%}
-        {
-          "@type": "Comment",
-          "author": {{ comment.author | json }},
-          "datePublished": "{{ comment.created_at | date: '%Y-%m-%dT%T' }}",
-          "text": {{ comment.content | json }}
-        }{%- unless forloop.last -%},{%- endunless -%}
-      {%- endfor -%}
-    ]
-{%- endif -%}
-  }
+  [
 
+    {%- comment -%}
+    /////////////////////////
+    // ORGANIZATION SCHEMA //
+    /////////////////////////
+    {%- endcomment -%}
 
+    {
+      "@context": "http://schema.org",
+      "@type": "Organization",
+      "url": "{{ shop.url }}",
+      "name": "{{ shop.name }}",
+      "contactPoint": [
+        { "@type": "ContactPoint",
+          "telephone": "+1-{{ shop.phone }}",
+          "email": "{{ shop.email }}",
+          "contactType": "customer service"
+        }
+      ]
+    },
+
+    {
+      "@context": "http://schema.org",
+
+      {%- if template contains 'product' -%}
+
+        {%- comment -%}
+        ////////////////////
+        // PRODUCT SCHEMA //
+        ////////////////////
+        {%- endcomment -%}
+
+        "@type": "Product",
+        "offers": {
+          "@type": "Offer",
+          "availability": {%- if product.available -%}"//schema.org/InStock"{%- else -%}"//schema.org/OutOfStock"{%- endif -%},
+          "price": {{ product.price_min | money_without_currency | json }},
+          {%- if variant.inventory_management == "shopify" and variant.inventory_policy != "continue" -%}
+            "inventoryLevel" : {{ product.variants.first.inventory_quantity | json }},
+          {%- endif -%}
+          "priceCurrency": {{ shop.currency | json }}
+        },
+        {%- unless product.vendor == blank -%}
+          "brand": {{ product.vendor | json }},
+        {%- endunless -%}
+        "name": {{ product.title | json }},
+        "description": {{ product.description | strip_html | newline_to_br | json }},
+        {%- unless product.type == blank -%}
+          "category": {{ product.type | json }},
+        {%- endunless -%}
+        "identifier": "{{ canonical_url }}",
+        "url": "{{ shop.url }}{{ product.url }}",
+        "itemCondition": "New",
+        "productID": {{ product.id }},
+        {%- unless product.sku == blank -%}
+          "sku": "{{ product.variants.first.sku }}",
+        {%- endunless -%}
+        {%- unless product.metafields.yotpo.reviews_average == blank -%}
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "bestRating": "5.0",
+            "worstRating": "0.0",
+            "ratingCount": {{ product.metafields.yotpo.reviews_count | json }},
+            "ratingValue": {{ product.metafields.yotpo.reviews_average | json }}
+        },
+        {%- endunless -%}
+        "image": {
+          "@type": "ImageObject",
+          "url": "https:{{ product.featured_image | img_url: '1080x1080', format: 'pjpg' }}",
+          "contentUrl": "https:{{ product.featured_image | img_url: '1080x1080', format: 'pjpg' }}",
+          "image": "https:{{ product.featured_image | img_url: '1080x1080', format: 'pjpg' }}",
+          "thumbnailUrl": "https:{{ product.featured_image | img_url: '480x480', format: 'pjpg' }}",
+          "encodingFormat": "image/jpeg",
+          "name": {{ product.featured_image.alt | default: product.title | json }},
+          "width": {
+            "@type": "QuantitativeValue",
+            "unitCode": "E37",
+            "unitText": "Pixel",
+            "value": "1080"
+          },
+          "height": {
+            "@type": "QuantitativeValue",
+            "unitCode": "E37",
+            "unitText": "Pixel",
+            "value": "1080"
+          }
+        }
+
+      {%- elsif template contains 'page' -%}
+
+        {%- comment -%}
+        /////////////////
+        // PAGE SCHEMA //
+        /////////////////
+        {%- endcomment -%}
+
+        "@type": "WebPage",
+        {% if page.tags.size > 0 %}
+          "keywords": "{{ page.tags | join: ', ' }}",
+        {% endif %}
+        "headline": {{ page.title | json }},
+        "name": {{ page.title | json }},
+        "description": {{ page.excerpt_or_content | strip_html | truncatewords: 50 | json }},
+        "dateCreated": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
+        "datePublished": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
+        "dateModified": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
+        "lastReviewed": "{{ page.published_at | date: '%Y-%m-%dT%T' }}",
+        "copyrightYear": "{{ page.published_at | date: '%Y' }}",
+        "copyrightHolder": {
+          "@type": "Organization",
+          "name": {{ shop.name | json }},
+          "url": "{{ shop.url }}"
+        },
+        {%- unless page.image == blank -%}
+          "image": {
+            "@type": "ImageObject",
+            "url": "https:{{ page.image | img_url: '1080x1080', format: 'pjpg' }}",
+            "image": "https:{{ page.image | img_url: '1080x1080', format: 'pjpg' }}",
+            "name": {{ page.image.alt | default: article.title | json }},
+            "width": {
+              "@type": "QuantitativeValue",
+              "unitCode": "E37",
+              "unitText": "Pixel",
+              "value": "1080"
+            },
+            "height": {
+              "@type": "QuantitativeValue",
+              "unitCode": "E37",
+              "unitText": "Pixel",
+              "value": "1080"
+            }
+          },
+        {%- endunless -%}
+        "author": {
+          "@type": "Organization",
+          "name": {{ shop.name | json }},
+          "url": "{{ shop.url }}"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": {{ shop.name | json }},
+          "url": "{{ shop.url }}"
+        }
+
+      {%- elsif template contains 'article' -%}
+
+        {%- comment -%}
+        //////////////////////
+        // BLOG POST SCHEMA //
+        //////////////////////
+        {%- endcomment -%}
+
+        "@type": "BlogPosting",
+        "articleSection": {{ blog.title | json }},
+        {% if article.tags.size > 0 %}
+          "keywords": "{{ article.tags | join: ', ' }}",
+        {% endif %}
+        "headline": {{ article.title | json }},
+        "name": {{ article.title | json }},
+        "description": {{ article.excerpt_or_content | strip_html | truncatewords: 50 | json }},
+        "dateCreated": "{{ article.created_at | date: '%Y-%m-%dT%T' }}",
+        "datePublished": "{{ article.published_at | date: '%Y-%m-%dT%T' }}",
+        "dateModified": "{{ article.published_at | date: '%Y-%m-%dT%T' }}",
+        "copyrightYear": "{{ article.created_at | date: '%Y' }}",
+        "copyrightHolder": {
+          "@type": "Organization",
+          "name": {{ shop.name | json }},
+          "url": "{{ shop.url }}"
+        },
+        {%- unless article.image == blank -%}
+          "image": {
+            "@type": "ImageObject",
+            "url": "https:{{ article.image | img_url: '1080x1080', format: 'pjpg' }}",
+            "image": "https:{{ article.image | img_url: '1080x1080', format: 'pjpg' }}",
+            "name": {{ article.image.alt | default: article.title | json }},
+            "width": {
+              "@type": "QuantitativeValue",
+              "unitCode": "E37",
+              "unitText": "Pixel",
+              "value": "1080"
+            },
+            "height": {
+              "@type": "QuantitativeValue",
+              "unitCode": "E37",
+              "unitText": "Pixel",
+              "value": "1080"
+            }
+          },
+        {%- endunless -%}
+        "author": {
+          "@type": "Organization",
+          "name": {{ shop.name | json }},
+          "url": "{{ shop.url }}"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": {{ shop.name | json }},
+          "url": "{{ shop.url }}"
+        },
+        "commentCount": {{ article.comments_count }},
+        "comment": [
+          {%- for comment in article.comments limit: 5 -%}
+            {
+              "@type": "Comment",
+              "author": {{ comment.author | json }},
+              "datePublished": "{{ comment.created_at | date: '%Y-%m-%dT%T' }}",
+              "text": {{ comment.content | json }}
+            }{%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        ]
+      {%- endif -%}
+    }
+
+  ]
+  
 </script>
