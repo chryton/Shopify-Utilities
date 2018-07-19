@@ -24,7 +24,7 @@
 	    template: '{{ template | replace: '.', ' ' | truncatewords: 1, '' | handle }}',
 	    template_default: '{{ template | escape }}'
 	};
-
+ 
 	{% if page.id %}
 		ENV.page = {
 		    id: {{ page.id }},
@@ -78,7 +78,7 @@
 			last: "{{ customer.last_name | escape }}"
 		},
 		tags: {{ customer.tags | json }}
-	}; 
+	};
 	{% else %}
 	ENV.customer = false;
 	{% endif %}
@@ -140,22 +140,32 @@
 		}
 		ENV.theme.customize = function(withRoute){
 			var url = (withRoute) ? "#" + window.location.pathname : "";
-			
+
 			window.open(ENV.shop.shopify_domain + '/admin/themes/' + ENV.theme.id + '/editor' + url);
 		}
 		ENV.theme.current = function(withRoute){
 			var path = (withRoute) ? window.location.pathname : "";
-		
+
 			console.log(ENV.shop.url + path + '/?preview_theme_id=' + ENV.theme.id);
 			return ENV.shop.url + path + '/?preview_theme_id=' + ENV.theme.id;
 		}
 		ENV.theme.sections.edit = function(){
 			window.open(ENV.shop.shopify_domain + '/admin/themes/' + ENV.theme.id + '/editor#' + window.location.pathname);
 		}
+		
+        if (window.location.origin.indexOf('shopifypreview.com') > 0) {
 
-		if (window.location.origin.indexOf('shopifypreview.com') > 0) {
-			window.location.replace(ENV.shop.url + window.location.pathname + window.location.search);
-		}
+			var query_params = window.location.search;
+
+			if (window.location.search && ENV.theme.role == "unpublished") {
+				query_params += '&preview_theme_id=' + ENV.theme.id;
+			} else if (ENV.theme.role == "unpublished") {
+				query_params = '?preview_theme_id=' + ENV.theme.id;
+			}
+			
+            window.location.replace(ENV.shop.url + window.location.pathname + query_params );
+			
+        }
 	{% endif %}
 
 
