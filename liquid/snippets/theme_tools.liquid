@@ -1,0 +1,53 @@
+<script>
+	window.THEME = THEME || {};
+	THEME.themeTools = window.THEME.themeTools || {};
+	THEME.themeTools.role = window.Shopify.theme.role || {{ theme.role | json }};
+	THEME.themeTools.id = window.Shopify.theme.id || {{ theme.id | json }};
+
+	THEME.themeTools.clearCart = function(ajax) {
+		if (ajax){
+			fetch(`${window.location.origin}/cart/clear.js?v=${Date.now()}`)
+				.then(response => response.json())
+				.then(data => console.log("Cart Cleared", data));
+		} else {
+			window.location.href = "/cart/clear";
+		}
+	};
+
+	THEME.themeTools.fetchCart = function(ajax) {
+		fetch(`${window.location.origin}/cart.js?v=${Date.now()}`)
+			.then(response => response.json())
+			.then(data => console.log("Cart Fetched", data));
+	};
+
+	{%- if theme.role == "unpublished" or theme.role == "development" -%}
+		THEME.themeTools.adminUrl = {{ shop.permanent_domain | prepend: "https://" | append: "/admin" | json }};
+		THEME.themeTools.adminRedirect = (route) => window.open(`${THEME.themeTools.adminUrl}/${route}`);
+		THEME.themeTools.openAdmin = () => THEME.themeTools.adminRedirect("");
+		THEME.themeTools.openProduct = (id) => THEME.themeTools.adminRedirect(`products/${(id) ? id : {{ product.id | json }}}`);
+		THEME.themeTools.openVariant = (id) => THEME.themeTools.adminRedirect(`products/{{ product.id | json }}/variants/${id}`);
+		THEME.themeTools.openCollection = (id) => THEME.themeTools.adminRedirect(`collections/${(id) ? id : {{ collection.id | json }}}`);
+		THEME.themeTools.openThemeCustomize = () => {
+			THEME.themeTools.adminRedirect(`themes/${THEME.themeTools.id}/editor?previewPath=${encodeURIComponent(window.location.pathname)}`)
+		};
+
+		THEME.themeTools.previewLink = () => {
+			const url = `${window.location.origin}/?_ab=0&_fd=0&_sc=1&preview_theme_id=${THEME.themeTools.id}`;
+			
+			// https://developers.google.com/web/updates/2015/04/cut-and-copy-commands?hl=en
+			copy(url);
+			
+			return url;
+		}
+		;
+
+		THEME.themeTools.previewCurrentLink = () => {
+			const url = `${window.location.href}?_ab=0&_fd=0&_sc=1&preview_theme_id=${THEME.themeTools.id}`;
+			
+			// https://developers.google.com/web/updates/2015/04/cut-and-copy-commands?hl=en
+			copy(url);
+			
+			return url;
+		}
+	{%- endif -%}
+</script>
